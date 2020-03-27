@@ -1,0 +1,23 @@
+{{- if .Values.thumbor.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-thumbor
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: thumbor
+spec:
+  type: {{ .Values.thumbor.service.type | quote }}
+  ports:
+    - port: 8000
+      targetPort: thumbor
+      name: thumbor
+      protocol: TCP
+  selector:
+    app: {{ template "kuserver-server.name" . }}
+    release: {{ .Release.Name }}
+    layer: thumbor
+{{- end }}

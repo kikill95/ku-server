@@ -1,0 +1,104 @@
+{{- if .Values.thumbor.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-thumbor
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: thumbor
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "kuserver-server.name" . }}
+      release: {{ .Release.Name }}
+      layer: thumbor
+  replicas: {{ .Values.thumbor.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "kuserver-server.name" . }}
+        release: {{ .Release.Name }}
+        layer: thumbor
+    spec:
+      containers:
+        - name: thumbor
+          image: "{{ .Values.thumbor.image.repository }}:{{ .Values.thumbor.image.tag }}"
+          imagePullPolicy: {{ .Values.thumbor.image.pullPolicy | quote }}
+          ports:
+            - containerPort: 8000
+              name: thumbor
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: thumbor
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: thumbor
+          env:
+            - name: ALLOW_UNSAFE_URL
+              value: "False"
+            - name: DETECTORS
+              value: "['thumbor.detectors.queued_detector.queued_complete_detector']"
+            - name: REDIS_STORAGE_SERVER_HOST
+              value: {{ template "kuserver-server.fullname" . }}-redis
+            - name: REDIS_QUEUE_SERVER_HOST
+              value: {{ template "kuserver-server.fullname" . }}-redis
+            - name: REDIS_QUEUE_SERVER_PORT
+              value: "6379"
+            - name: LOADER
+              value: thumbor_cloud_storage.loaders.cloud_storage_loader
+            - name: MIXED_STORAGE_DETECTOR_STORAGE
+              value: tc_redis.storages.redis_storage
+            - name: AUTO_WEBP
+              value: "True"
+            - name: RESPECT_ORIENTATION
+              value: "True"
+            - name: STORAGE_EXPIRATION_SECONDS
+              value: "None"
+            - name: RESULT_STORAGE_EXPIRATION_SECONDS
+              value: "None"
+            - name: PRESERVE_EXIF_INFO
+              value: "True"
+            - name: ALLOW_OLD_URLS
+              value: "False"
+            - name: MAX_AGE
+              value: "315400000"
+            - name: MAX_HEIGHT
+              value: "1080"
+            - name: MAX_WIDTH
+              value: "1920"
+            - name: QUALITY
+              value: "70"
+            - name: SECURITY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ "THUMBOR_KEY" | lower | quote }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ "GCLOUD_ACCESS_KEY_ID" | lower | quote }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ "GCLOUD_SECRET_ACCESS_KEY" | lower | quote }}
+            - name: CLOUD_STORAGE_BUCKET_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ "GCLOUD_BUCKET_NAME" | lower | quote }}
+            - name: CLOUD_STORAGE_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ "CLOUD_STORAGE_PROJECT_ID" | lower | quote }}
+          resources:
+{{ toYaml .Values.thumbor.resources | indent 12 }}
+{{- end }}

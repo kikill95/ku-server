@@ -1,0 +1,23 @@
+{{- if .Values.mongo.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-mongo
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: mongo
+spec:
+  type: {{ .Values.mongo.service.type | quote }}
+  ports:
+    - port: 27017
+      targetPort: mongo
+      protocol: TCP
+      name: mongo
+  selector:
+    app: {{ template "kuserver-server.name" . }}
+    release: {{ .Release.Name }}
+    layer: mongo
+{{- end }}

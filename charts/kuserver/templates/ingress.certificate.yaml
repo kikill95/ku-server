@@ -1,0 +1,28 @@
+{{- if or .Values.web.enabled .Values.thumbor.enabled -}}
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+ name: {{ template "kuserver-server.fullname" . }}-certificate
+ labels:
+   app: {{ template "kuserver-server.name" . }}
+   chart: {{ template "kuserver-server.chart" . }}
+   release: {{ .Release.Name }}
+   heritage: {{ .Release.Service }}
+   layer: ingress
+spec:
+ secretName: {{ template "kuserver-server.fullname" . }}-tls
+ dnsNames:
+    - {{ .Values.web.host | quote }}
+    - {{ .Values.thumbor.media | quote }}
+ issuerRef:
+   name: {{ .Values.certificates.certIssuer }}
+   kind: ClusterIssuer
+ commonName: '*.{{ .Values.web.host | quote }}'
+ acme:
+   config:
+   - dns01:
+       provider: clouddns
+     domains:
+     - '*.{{ .Values.web.host | quote }}'
+     - {{ .Values.web.host | quote }}
+{{- end }}

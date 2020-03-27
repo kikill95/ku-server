@@ -1,0 +1,40 @@
+# cert-manager/issuer.yaml
+kind: ClusterIssuer
+apiVersion: cert-manager.io/v1
+metadata:
+  name: letsencrypt-prod
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: kuserver@mail
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    dns01:
+      providers:
+      - name: clouddns
+        clouddns:
+          project: kuserver-server
+          serviceAccountSecretRef:
+            name: clouddns
+            key: clouddns.key.json
+---
+kind: ClusterIssuer
+apiVersion: cert-manager.io/v1
+metadata:
+  name: letsencrypt-staging
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: kuserver@mail
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    dns01:
+      providers:
+      - name: clouddns
+        clouddns:
+          project: kuserver-server
+          serviceAccountSecretRef:
+            name: clouddns
+            key: clouddns.key.json

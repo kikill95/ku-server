@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-redis
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: redis
+spec:
+{{- if .Values.redis.enabled }}
+  type: {{ .Values.redis.service.type | quote }}
+  ports:
+    - port: 6379
+      targetPort: redis
+      protocol: TCP
+      name: redis
+  selector:
+    app: {{ template "kuserver-server.name" . }}
+    release: {{ .Release.Name }}
+    layer: redis
+{{- else }}
+{{/* Split horizon dns isnt getting resolved here so not used */}}
+  type: ExternalName
+  externalName: {{ .Values.redis.host | quote }}
+{{- end }}

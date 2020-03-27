@@ -1,0 +1,79 @@
+version: '2'
+services:
+  # Runs app in 'debug' mode for development
+  # Node debug port 5858
+  web:
+    extends:
+      service: app
+      file: docker-compose.base.yaml
+    links:
+      - mongo
+      - redis
+    command: npm run start-dev
+    ports:
+      - 5858:5858 # exposed for debugging
+      - 8083:3000
+    expose:
+      - 3000
+
+  worker:
+    extends:
+      service: app
+      file: docker-compose.base.yaml
+    links:
+      - redis
+      - mongo
+    command: npm run start-dev-worker
+    ports:
+      - 5859:5858 # exposed for debugging
+
+  mongo:
+    image: mongo:4.0
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - 27018:27017 # exposed for debugging
+
+  redis:
+    image: redis:alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    hostname: redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - 6381:6379 # exposed for debugging
+
+  thumbor:
+    image: thumbor-gcloud:latest
+    links:
+    - redis
+    environment:
+    - ALLOW_UNSAFE_URL=True
+#    - AWS_REGION=ap-southeast-2
+    - AWS_LOADER_BUCKET=bucketname
+    - REDIS_STORAGE_SERVER_HOST=localhost
+    - REDIS_QUEUE_SERVER_HOST=localhost
+    - REDIS_QUEUE_SERVER_PORT=6379
+    - AWS_ACCESS_KEY_ID= # put your AWS_ACCESS_KEY_ID here
+    - AWS_SECRET_ACCESS_KEY= # put your AWS_SECRET_ACCESS_KEY here
+    - GCLOUD_ACCESS_KEY_ID=
+    - GCLOUD_SECRET_ACCESS_KEY=
+    - GCLOUD_BUCKET_NAME=
+    - LOADER=thumbor_cloud_storage.loaders.cloud_storage_loader
+    - STORAGE=thumbor.storages.mixed_storage
+    - MIXED_STORAGE_DETECTOR_STORAGE=tc_redis.storages.redis_storage
+    - AUTO_WEBP=True
+    - RESPECT_ORIENTATION=True
+    - PRESERVE_EXIF_INFO=True
+    - ALLOW_OLD_URLS=False
+    - MAX_AGE=315400000
+    - QUALITY=70
+    - MAX_WIDTH=1920
+    - MAX_HEIGHT=1080
+    restart: always
+    ports:
+      - 8086:8000
+
+volumes:
+  mongo-data: {}
+  redis-data: {}

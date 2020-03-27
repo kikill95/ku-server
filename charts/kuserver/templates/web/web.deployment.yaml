@@ -1,0 +1,88 @@
+{{- if .Values.web.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-web
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: web
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "kuserver-server.name" . }}
+      release: {{ .Release.Name }}
+      layer: web
+  replicas: {{ .Values.web.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "kuserver-server.name" . }}
+        release: {{ .Release.Name }}
+        layer: web
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.kuserver.image.repository }}:{{ .Values.kuserver.image.tag }}"
+          imagePullPolicy: {{ .Values.kuserver.image.pullPolicy | quote }}
+          ports:
+            - name: node-server
+              containerPort: 3000
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: node-server
+            initialDelaySeconds: 60
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: node-server
+            initialDelaySeconds: 60
+          env:
+            - name: KUSERVER_REDIS_HOST
+              value: {{ template "kuserver-server.fullname" . }}-redis
+            - name: KUSERVER_MONGO_HOST
+{{- if .Values.mongo.enabled }}
+              value: {{ template "kuserver-server.fullname" . }}-mongo
+{{- else }}
+              value: {{ .Values.mongo.host | quote }}
+{{- end }}
+            - name: KUSERVER_HOST
+              value: {{ .Values.web.host }}
+            - name: MONGODB_USER
+              value: {{ .Values.mongo.user }}
+            - name: STRIPE_KEY
+              value: {{ .Values.web.STRIPE_KEY }}
+            - name: STRIPE_CLIENT_ID
+              value: {{ .Values.web.STRIPE_CLIENT_ID }}
+            - name: STRIPE_PUBLISHABLE_KEY
+              value: {{ .Values.web.STRIPE_PUBLISHABLE_KEY }}
+            - name: APPLE_PASSWORD
+              value: {{ .Values.web.APPLE_PASSWORD }}
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" . }}-mongo
+                  key: "mongo-password"
+            - name: KUSERVER_DB_NAME
+              value: {{ .Values.mongo.database }}
+            - name: THUMBOR_HOST
+              value: {{ .Values.thumbor.media | quote }}
+            - name: SECURITY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ "THUMBOR_KEY" | lower | quote }}
+{{- range $key,$value := .Values.kuserver.env }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ $key | lower | quote }}
+{{- end }}
+          resources:
+{{ toYaml .Values.web.resources | indent 12 }}
+{{- end }}

@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+app/files/temp/
+app/routes/temp/
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# env environment variables file
+.development.env
+
+# Environments files
+development.env
+docker-compose.override.yaml
+./values.yaml
+values-test.yaml
+values-stage.yaml
+values-live.yaml
+
+# Secret files
+clouddns.key.json
+firebase.key.json
+sendgrid.env
+app/.well-known/
+
+app/admin/src/**/*.css
+app/admin/src/**/*.css.map
+
+apple-developer-domain-association.txt

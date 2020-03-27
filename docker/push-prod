@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -e
+# Move into the project root
+dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
+cd $dir/..
+
+if [ -z "$TAG" ]; then
+    export TAG=latest
+fi
+if [ -z "$REGISTRY" ]; then
+    export REGISTRY=eu.gcr.io/ku-server-id/kuserver-server
+fi
+if [ -z "$IMAGE_PROD_WEB" ]; then
+    export IMAGE_PROD_WEB=$REGISTRY/web:$TAG
+fi
+set -x
+docker push $IMAGE_PROD_WEB

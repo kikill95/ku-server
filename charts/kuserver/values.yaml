@@ -1,0 +1,113 @@
+# General
+ingress:
+  ip: ~
+  class: ~
+
+certificates:
+#  issuer: letsencrypt-prod-dns
+  type: dns01
+#  ingressClass: nginx
+  certIssuer: letsencrypt-prod-dns
+  options:
+    provider: clouddns
+
+# Web
+web:
+  enabled: true
+  host: ingress.example.com
+  replicaCount: 3
+  service:
+    type: NodePort
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 2Gi
+
+redis:
+  enabled: true
+  host: redis.example.com
+#  prefix: 'farm:'
+  image:
+    repository: redis
+    tag: alpine
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 50Mi
+    limits:
+      cpu: 100m
+      memory: 500Mi
+
+mongo:
+  enabled: false
+  host: mongo.example.com
+  user: kuserver
+  database: kuserver
+  image:
+    repository: mongo
+    tag: 3.6
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 50Mi
+    limits:
+      cpu: 100m
+      memory: 500Mi
+
+worker:
+  enabled: true
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 1000m
+      memory: 550Mi
+
+thumbor:
+  enabled: true
+  host: thumbor.example.com
+  image:
+    repository: thumbor-gcloud
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 200m
+      memory: 500Mi
+    limits:
+      cpu: 700m
+      memory: 700Mi
+
+kuserver:
+  image:
+    repository: eu.gcr.io/ku-server-id/kuserver-server/web
+    tag: latest
+    pullPolicy: IfNotPresent
+  env:
+    AWS_API_VERSION_SNS: 2010-03-31
+    MAILER_USER: example@mail.com

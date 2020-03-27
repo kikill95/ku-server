@@ -1,0 +1,71 @@
+{{- if .Values.worker.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-worker
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: worker
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "kuserver-server.name" . }}
+      release: {{ .Release.Name }}
+      layer: worker
+  replicas: {{ .Values.worker.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "kuserver-server.name" . }}
+        release: {{ .Release.Name }}
+        layer: worker
+    spec:
+      containers:
+        - name: worker
+          image: "{{ .Values.kuserver.image.repository }}:{{ .Values.kuserver.image.tag }}"
+          imagePullPolicy: {{ .Values.kuserver.image.pullPolicy | quote }}
+          command:
+            - ./app/bin/worker
+          env:
+            - name: KUSERVER_REDIS_HOST
+              value: {{ template "kuserver-server.fullname" . }}-redis
+            - name: KUSERVER_MONGO_HOST
+{{- if .Values.mongo.enabled }}
+              value: {{ template "kuserver-server.fullname" . }}-mongo
+{{- else }}
+              value: {{ .Values.mongo.host | quote }}
+{{- end }}
+            - name: MONGODB_USER
+              value: {{ .Values.mongo.user }}
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" . }}-mongo
+                  key: "mongo-password"
+            - name: KUSERVER_DB_NAME
+              value: {{ .Values.mongo.database }}
+            - name: STRIPE_KEY
+              value: {{ .Values.worker.STRIPE_KEY }}
+            - name: STRIPE_CLIENT_ID
+              value: {{ .Values.web.STRIPE_CLIENT_ID }}
+            - name: STRIPE_PUBLISHABLE_KEY
+              value: {{ .Values.web.STRIPE_PUBLISHABLE_KEY }}
+            - name: KUSERVER_HOST
+              value: {{ .Values.worker.KUSERVER_HOST }}
+            - name: NY_GIFT_TEMPLATE
+              value: {{ .Values.worker.NY_GIFT_TEMPLATE }}
+            - name: WEB_APP_URL
+              value: {{ .Values.worker.WEB_APP_URL }}
+{{- range $key,$value := .Values.kuserver.env }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-kuserver
+                  key: {{ $key | lower | quote }}
+{{- end }}
+          resources:
+{{ toYaml .Values.worker.resources | indent 12 }}
+{{- end }}

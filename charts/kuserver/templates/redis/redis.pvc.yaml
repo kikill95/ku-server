@@ -1,0 +1,27 @@
+{{- if .Values.redis.enabled -}}
+{{- if .Values.redis.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-redis
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: redis
+spec:
+  accessModes:
+  - {{ .Values.redis.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size | quote }}
+{{- if .Values.redis.persistence.storageClass }}
+{{- if (eq "-" .Values.redis.persistence.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: {{ .Values.redis.persistence.storageClass | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

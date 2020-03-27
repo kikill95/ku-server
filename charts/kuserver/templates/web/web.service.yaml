@@ -1,0 +1,23 @@
+{{- if .Values.web.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-web
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: web
+spec:
+  type: {{ .Values.web.service.type | quote }}
+  ports:
+    - port: 3000
+      targetPort: node-server
+      protocol: TCP
+      name: node-server
+  selector:
+    app: {{ template "kuserver-server.name" . }}
+    release: {{ .Release.Name }}
+    layer: web
+{{- end }}

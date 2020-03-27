@@ -1,0 +1,62 @@
+{{- if .Values.mongo.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-mongo
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: mongo
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "kuserver-server.name" . }}
+      release: {{ .Release.Name }}
+      layer: mongo
+  template:
+    metadata:
+      labels:
+        app: {{ template "kuserver-server.name" . }}
+        release: {{ .Release.Name }}
+        layer: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: "{{ .Values.mongo.image.repository }}:{{ .Values.mongo.image.tag }}"
+          imagePullPolicy: {{ .Values.mongo.image.pullPolicy | quote }}
+          ports:
+            - name: mongo
+              containerPort: 27017
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+              - mongo
+              - --eval
+              - "db.adminCommand('ping')"
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /mongo
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: {{ .Values.mongo.user }}
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kuserver-server.fullname" $ }}-mongo
+                  key: mongo-password
+            - name: MONGO_INITDB_DATABASE
+              value: {{ .Values.mongo.database }}
+          resources:
+{{ toYaml .Values.mongo.resources | indent 12 }}
+      volumes:
+        - name: mongo-data
+        {{- if .Values.mongo.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ template "kuserver-server.fullname" . }}-mongo
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end }}

@@ -1,0 +1,57 @@
+{{- if .Values.redis.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "kuserver-server.fullname" . }}-redis
+  labels:
+    app: {{ template "kuserver-server.name" . }}
+    chart: {{ template "kuserver-server.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    layer: redis
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "kuserver-server.name" . }}
+      release: {{ .Release.Name }}
+      layer: redis
+  template:
+    metadata:
+      labels:
+        app: {{ template "kuserver-server.name" . }}
+        release: {{ .Release.Name }}
+        layer: redis
+    spec:
+      containers:
+        - name: redis
+          image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy | quote }}
+          {{- if .Values.redis.persistence.enabled }}
+          args:
+            - redis-server
+            - --appendonly yes
+          {{- end }}
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          resources:
+{{ toYaml .Values.redis.resources | indent 12 }}
+      volumes:
+        - name: redis-data
+        {{- if .Values.redis.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ template "kuserver-server.fullname" . }}-redis
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end }}

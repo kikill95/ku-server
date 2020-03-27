@@ -1,0 +1,31 @@
+version: '2'
+services:
+  web:
+    # Required for docker-machine on osx
+    command: npm run-script start-dev-osx
+    # Configure AWS and Thumbor
+    environment:
+    - AWS_ACCESS_KEY_ID=
+    - AWS_SECRET_ACCESS_KEY=
+    - AWS_REGION=
+    - AWS_API_VERSION_SNS=
+    - NODE_ENV=
+    - MONGO_TYPE=mongodb
+    ports:
+    - 81:3001
+
+  worker:
+    command: npm run start-worker
+    environment:
+    - AWS_ACCESS_KEY_ID=
+    - AWS_SECRET_ACCESS_KEY=
+    - AWS_REGION=
+    - AWS_API_VERSION_SNS=
+    - NODE_ENV=
+    - MONGO_TYPE=mongodb
+
+  thumbor:
+    environment:
+    - AWS_ACCESS_KEY_ID=
+    - AWS_SECRET_ACCESS_KEY=
+    - SECURITY_KEY=
