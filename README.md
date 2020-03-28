@@ -84,11 +84,11 @@ Setup:
 If changes in code (TAG here should match with tag in `values.yaml`)
 
 ```bash
-export TAG=<environment>-<yyyy-mm-dd>f<version during the current day>
+export TAG=<environment>-<yyyy-mm-dd>v<version during the current day>
 ./docker/build-prod && ./docker/push-prod
 ```
 
-For example, TAG can be "test-2019-09-05.f.1"
+For example, TAG can be "test-2020-03-28.v.1"
 
 If changes in configurations of **Test server**:
 
